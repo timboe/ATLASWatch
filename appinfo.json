@@ -1,0 +1,55 @@
+{
+  "uuid": "b82abc92-3611-4e83-bf8f-f13bde97ffb8",
+  "shortName": "ATLAS",
+  "longName": "ATLAS",
+  "companyName": "TimMartin",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["basalt", "chalk", "aplite"],
+  "capabilities": [ "health" ],
+  "enableMultiJS": true,
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "OWMWeatherAppMessageKeyRequest": 0,
+    "OWMWeatherAppMessageKeyReply": 1,
+    "OWMWeatherAppMessageKeyDescription": 2,
+    "OWMWeatherAppMessageKeyDescriptionShort": 3,
+    "OWMWeatherAppMessageKeyName": 4,
+    "OWMWeatherAppMessageKeyTempK": 5,
+    "OWMWeatherAppMessageKeyPressure": 6,
+    "OWMWeatherAppMessageKeyWindSpeed": 7,
+    "OWMWeatherAppMessageKeyWindDirection": 8,
+    "OWMWeatherAppMessageKeyBadKey": 91,
+    "OWMWeatherAppMessageKeyLocationUnavailable": 92
+  },
+  "resources": {
+    "media": [
+      { "file": "fonts/meteocons.ttf", "name": "WEATHER_14", "type": "font" },
+      { "file": "fonts/MONOFONT.ttf", "name": "MONO_49", "type": "font", "characterRegex": "[0-9]" },
+      { "file": "fonts/comicbd.ttf", "name": "COMIC_49", "type": "font", "characterRegex": "[0-9]" },
+      { "file": "images/bt.png", "name": "BT", "type": "png" },
+      { "file": "images/h.png", "name": "H", "type": "png" },
+      { "file": "images/to.png", "name": "TO", "type": "png" },
+      { "file": "images/w.png", "name": "W", "type": "png" },
+      { "file": "images/z.png", "name": "Z", "type": "png" },
+      { "file": "images/g.png", "name": "G", "type": "png" },
+      { "file": "images/e.png", "name": "E", "type": "png" },
+      { "file": "images/m.png", "name": "M", "type": "png" },
+      { "file": "images/b.png", "name": "B", "type": "png" },
+      { "file": "images/q.png", "name": "Q", "type": "png" },
+      { "file": "images/n.png", "name": "N", "type": "png" },
+      { "file": "images/sun.png", "name": "SUN", "type": "png" },
+      { "file": "images/moon.png", "name": "MOON", "type": "png" },
+      { "file": "images/scatteredday.png", "name": "SCATTEREDDAY", "type": "png" },
+      { "file": "images/scatterednight.png", "name": "SCATTEREDNIGHT", "type": "png" },
+      { "file": "images/cloud.png", "name": "CLOUD", "type": "png" },
+      { "file": "images/rain.png", "name": "RAIN", "type": "png" },
+      { "file": "images/snow.png", "name": "SNOW", "type": "png" },
+      { "file": "images/thunder.png", "name": "THUNDER", "type": "png" },
+      { "file": "images/wind.png", "name": "WIND", "type": "png" },
+      { "file": "images/fog.png", "name": "FOG", "type": "png" }
+    ]
+  }
+}
