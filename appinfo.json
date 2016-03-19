@@ -1,32 +1,37 @@
 {
   "uuid": "b82abc92-3611-4e83-bf8f-f13bde97ffb8",
-  "shortName": "ATLAS",
-  "longName": "ATLAS",
-  "companyName": "TimMartin",
+  "shortName": "Higgs O'Clock",
+  "longName": "Higgs O'Clock",
+  "companyName": "Tim Martin",
   "versionLabel": "1.0",
   "sdkVersion": "3",
   "targetPlatforms": ["basalt", "chalk", "aplite"],
-  "capabilities": [ "health" ],
+  "capabilities": [
+    "configurable",
+    "location",
+    "health"
+  ],
   "enableMultiJS": true,
   "watchapp": {
-    "watchface": false
+    "watchface": true
   },
   "appKeys": {
-    "OWMWeatherAppMessageKeyRequest": 0,
-    "OWMWeatherAppMessageKeyReply": 1,
-    "OWMWeatherAppMessageKeyDescription": 2,
-    "OWMWeatherAppMessageKeyDescriptionShort": 3,
-    "OWMWeatherAppMessageKeyName": 4,
-    "OWMWeatherAppMessageKeyTempK": 5,
-    "OWMWeatherAppMessageKeyPressure": 6,
-    "OWMWeatherAppMessageKeyWindSpeed": 7,
-    "OWMWeatherAppMessageKeyWindDirection": 8,
-    "OWMWeatherAppMessageKeyBadKey": 91,
-    "OWMWeatherAppMessageKeyLocationUnavailable": 92
+    "KEY_TOWATCH_ANALOGUE": 0,
+    "KEY_TOWATCH_CELSIUS": 1,
+    "KEY_TOWATCH_FAHRENHEIT": 2,
+    "KEY_TOWATCH_CALENDAR": 3,
+    "KEY_TOWATCH_WEATHER": 4,
+    "KEY_TOWATCH_BATTERY": 5,
+    "KEY_TOWATCH_DECAY": 6,
+    "KEY_TOWATCH_ACTIVITY": 7,
+    "KEY_TOWATCH_BLUETOOTH": 8,
+    "KEY_TOWATCH_WEATHER_TEMP": 9,
+    "KEY_TOWATCH_WEATHER_ICON": 10,
+    "KEY_TOPHONE_GETWEATHER": 11,
+    "KEY_TOWATCH_READY": 12
   },
   "resources": {
     "media": [
-      { "file": "fonts/meteocons.ttf", "name": "WEATHER_14", "type": "font" },
       { "file": "fonts/MONOFONT.ttf", "name": "MONO_49", "type": "font", "characterRegex": "[0-9]" },
       { "file": "fonts/comicbd.ttf", "name": "COMIC_49", "type": "font", "characterRegex": "[0-9]" },
       { "file": "images/bt.png", "name": "BT", "type": "png" },

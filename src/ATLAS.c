@@ -1,41 +1,10 @@
 #include <pebble.h>
+#include <ATLAS.h>
+#include <communication.h>
 #include <gpath_builder.h>
 
 static Window* s_mainWindow;
 static Layer* s_atlasLayer;
-
-#define KEY_TOTAL_DAYS 200
-#define KEY_TOTAL_STEPS 201
-
-// Move on Basalt
-#ifdef PBL_RECT
-//
-#define XCENTRE 72
-#define YCENTRE 84
-#define X (XCENTRE-90)
-#define Y (YCENTRE-90)
-#define CLOCKNUDGE 0
-//
-#else
-//
-#define XCENTRE 90
-#define YCENTRE 90
-#define X 0
-#define Y 0
-#define CLOCKNUDGE 18
-//
-#endif
-#define WIDTH (XCENTRE*2)
-#define HEIGHT (YCENTRE*2)
-
-#define ID_END 30
-#define EM_END 48
-#define HCAL_END 66
-
-#define N_EMHAD 2
-#define N_DECAY 4
-
-#define TEXTSIZE 6
 
 static const uint32_t const segments[] = { 200, 200, 200, 200, 200 };
 VibePattern btDisconnect = {
@@ -52,7 +21,6 @@ const GRect timeRect = {
   .origin = { .x = (6+CLOCKNUDGE), .y = YCENTRE-35 },
   .size = { .w = WIDTH-(6+CLOCKNUDGE)*2, .h = 100 }
 };
-
 
 const GPathInfo innerMuon = {
   .num_points = 8,
@@ -128,20 +96,20 @@ static char s_clockB[TEXTSIZE];
 static char s_dayOfWeek[TEXTSIZE];
 static char s_dayOfMonth[TEXTSIZE];
 
-static int s_watchStyle = 1;
-
 static int s_rndSeed;
 
-static GFont s_comic;
+static int s_display = false; // are we all setup?
+
 static GFont s_mono;
-static GFont s_weather;
+//static GFont s_comic;
 
 typedef enum {kSun, kMoon, kScatteredDay, kScatteredNight, kCloud,
-              kRain, kSnow, kThunder, kWind, kFog} weatherType_t;
+              kRain, kThunder, kSnow, kFog, kWind} weatherType_t;
 
 static char s_temperature[TEXTSIZE];
 static int s_tempValue;
 static weatherType_t s_weatherCode;
+static bool s_weatherValid = false;
 
 static BatteryChargeState s_battery;
 static bool s_bluetoothStatus;
@@ -168,8 +136,7 @@ unsigned getN(int rolls, int sides) {
 
 unsigned fuzzAngle(int angle, int fuzz) {
   fuzz = (TRIG_MAX_ANGLE / 360) * fuzz;
-  int f = (2 * (rand() % fuzz)) - fuzz;
-  angle += f;
+  angle = (rand() % 2 == 0 ? angle + fuzz : angle - fuzz);
   if (angle > TRIG_MAX_ANGLE) angle -= TRIG_MAX_ANGLE;
   else if (angle < 0) angle += TRIG_MAX_ANGLE;
   return (unsigned) angle;
@@ -192,16 +159,16 @@ void chooseNewDecay() {
 
   int _a[2];
   _a[0] = randomAngle(0);
-  _a[1] = fuzzAngle(_a[0] + TRIG_MAX_ANGLE/4, 45);
+  _a[1] = fuzzAngle(_a[0] + (TRIG_MAX_ANGLE/4), 40);
 
   if (_decay == kHBB) {
     s_bquark[0] = _a[0];
-    s_bquark[1] = fuzzAngle(_a[0] + TRIG_MAX_ANGLE/2, 90);
+    s_bquark[1] = fuzzAngle(_a[0] + (TRIG_MAX_ANGLE/2), 20);
     s_decayMsg[_letter++] = s_bitmap[kB];
     s_decayMsg[_letter++] = s_bitmap[kB];
   } else if (_decay == kHGG) {
     s_photon[0] = _a[0];
-    s_photon[1] = fuzzAngle(_a[0] + TRIG_MAX_ANGLE/2, 90);
+    s_photon[1] = fuzzAngle(_a[0] + (TRIG_MAX_ANGLE/2), 20);
     s_decayMsg[_letter++] = s_bitmap[kG];
     s_decayMsg[_letter++] = s_bitmap[kG];
   } else if (_decay == kHWW) {
@@ -223,7 +190,7 @@ void chooseNewDecay() {
         s_decayMsg[_letter++] = s_bitmap[kN];
       } else if (_w == kVQQ) {
         s_bquark[_nQ++] = _a[d];
-        s_bquark[_nQ++] = fuzzAngle(_a[d], 90);
+        s_bquark[_nQ++] = fuzzAngle(_a[d] + (TRIG_MAX_ANGLE/2), 20);
         s_decayMsg[_letter++] = s_bitmap[kQ];
         s_decayMsg[_letter++] = s_bitmap[kQ];
       }
@@ -237,17 +204,17 @@ void chooseNewDecay() {
       VDecay_t _z = rand() % kVDecaySize;
       if (_z == kVEX) {
         s_electron[_nE++] = _a[d];
-        s_electron[_nE++] = fuzzAngle(_a[d], 90);
+        s_electron[_nE++] = fuzzAngle(_a[d] + (TRIG_MAX_ANGLE/2), 20);
         s_decayMsg[_letter++] = s_bitmap[kE];
         s_decayMsg[_letter++] = s_bitmap[kE];
       } else if (_z == kVMuX) {
         s_muon[_nMu++] = _a[d];
-        s_muon[_nMu++] = fuzzAngle(_a[d], 90);
+        s_muon[_nMu++] = fuzzAngle(_a[d] + (TRIG_MAX_ANGLE/2), 20);
         s_decayMsg[_letter++] = s_bitmap[kM];
         s_decayMsg[_letter++] = s_bitmap[kM];
       } else if (_z == kVQQ) {
         s_bquark[_nQ++] = _a[d];
-        s_bquark[_nQ++] = fuzzAngle(_a[d], 90);
+        s_bquark[_nQ++] = fuzzAngle(_a[d] + (TRIG_MAX_ANGLE/2), 20);
         s_decayMsg[_letter++] = s_bitmap[kQ];
         s_decayMsg[_letter++] = s_bitmap[kQ];
       }
@@ -255,64 +222,74 @@ void chooseNewDecay() {
   }
 }
 
-//
-// void updateWeather(int16_t temp, weatherType weatherCode) {
-//   s_tempValue = rand() % 20 - 20;
-//   s_weatherCode = rand() % 12;
-//   updateWeatherBuffer();
-// }
-
 void updateWeather() {
-  s_tempValue = rand() % 200 - 200;
-  s_weatherCode = rand() % 10;
+  if (persist_read_int(OPT_WEATHER) == 0) return;
 
-  int8_t temp = s_tempValue;
-  if (temp == -99) {
-    strcpy(s_temperature, "");
-  } else {
-    //if (getUserOpt(OPT_CELSIUS) == false) {
-    //  temp = ((temp*5)/9) + 32; // Convert to F
-    //}
-    snprintf(s_temperature, sizeof(s_temperature), "%i", temp);
-    //if (getUserOpt(OPT_CELSIUS) == false) strcat(s_temperature, "F");
-    //else
-    strcat(s_temperature, "C");
+  // Check buffer
+  int32_t _timeOfWeather = persist_read_int(DATA_WEATHER_TIME);
+  int32_t _now = time(NULL);
+
+  if (_timeOfWeather == 0 || _timeOfWeather > _now || (_now - _timeOfWeather) > 3*SECONDS_PER_HOUR) {
+
+    requestWeatherUpdate(); // Needs refreshing
+
+  } else { // use cache
+
+    int32_t _tempType = persist_read_int(OPT_TEMP_UNIT);
+    s_tempValue = persist_read_int(DATA_WEATHER_TEMP);
+    s_weatherCode = persist_read_int(DATA_WEATHER_ICON);
+
+    if (_tempType == TEMP_UNIT_F) {
+      s_tempValue = ((s_tempValue*5)/9) + 32;
+      snprintf(s_temperature, sizeof(s_temperature), "%i", s_tempValue);
+      strcat(s_temperature, "F");
+    } else if (_tempType == TEMP_UNIT_C) {
+      snprintf(s_temperature, sizeof(s_temperature), "%i", s_tempValue);
+      strcat(s_temperature, "C");
+    } else {
+      s_tempValue += 273;
+      snprintf(s_temperature, sizeof(s_temperature), "%i", s_tempValue);
+      strcat(s_temperature, "K");
+    }
+
+    s_weatherValid = true;
+    layer_mark_dirty(s_atlasLayer);
+
   }
-  layer_mark_dirty(s_atlasLayer);
 }
 
 void updateBattery(BatteryChargeState charge) {
+  if (persist_read_int(OPT_BATTERY) == 0) return;
   s_battery = charge;
   layer_mark_dirty(s_atlasLayer);
 }
 
 void updateBluetooth(bool bluetooth) {
+  if (persist_read_int(OPT_BLUETOOTH) == 0) {
+    s_bluetoothStatus = true;
+    return;
+  }
   s_bluetoothStatus = bluetooth;
   if (s_bluetoothStatus == false) vibes_enqueue_custom_pattern(btDisconnect);
   layer_mark_dirty(s_atlasLayer);
 }
 
 #ifdef PBL_HEALTH
-void updateSteps(bool _updateAverage) {
+void updateSteps() {
+  if (persist_read_int(OPT_ACTIVITY) == 0) return;
   HealthMetric _metric = HealthMetricStepCount;
   time_t _start = time_start_of_today();
-  time_t _end = time(NULL);
+  time_t _endNow = time(NULL);
+  time_t _endDay = _start + (24 * SECONDS_PER_HOUR);
   // Check the metric has data available for today
-  HealthServiceAccessibilityMask _mask = health_service_metric_accessible(_metric, _start, _end);
+  HealthServiceAccessibilityMask _maskS = health_service_metric_accessible(_metric, _start, _endNow);
+  HealthServiceAccessibilityMask _maskA = health_service_metric_averaged_accessible(_metric, _start, _endDay, HealthServiceTimeScopeDailyWeekdayOrWeekend);
 
-  if(_mask & HealthServiceAccessibilityMaskAvailable) {
+  if((_maskA & HealthServiceAccessibilityMaskAvailable) && (_maskS & HealthServiceAccessibilityMaskAvailable)) {
     int _stepsToday = (int) health_service_sum_today(_metric);
+    int _stepsAverage = (int) health_service_sum_averaged(_metric, _start, _endDay, HealthServiceTimeScopeDailyWeekdayOrWeekend);
 
-    if (_updateAverage == true) {
-      int _totSteps = persist_read_int(KEY_TOTAL_STEPS);
-      persist_write_int(KEY_TOTAL_STEPS, _totSteps + _stepsToday);
-      int _totDays = persist_read_int(KEY_TOTAL_DAYS);
-      persist_write_int(KEY_TOTAL_DAYS, _totDays + 1);
-    }
-
-    // Calc average
-    int _avSteps = persist_read_int(KEY_TOTAL_STEPS) / persist_read_int(KEY_TOTAL_DAYS);
-    s_stepProgress = (8 * _stepsToday) / _avSteps; // 0 = no steps, 8 = average steps
+    s_stepProgress = (TRIG_MAX_ANGLE * _stepsToday) / _stepsAverage;
   }
 }
 #endif
@@ -349,8 +326,7 @@ void draw3DText(GContext *ctx, GRect loc, GFont f, const char* buffer, uint8_t o
 }
 
 GFont getFont() {
-  if (s_watchStyle == 1) return s_mono;
-  else return s_comic;
+  return s_mono;
 }
 
 static void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
@@ -368,7 +344,8 @@ static void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
   APP_LOG(APP_LOG_LEVEL_INFO,"UnitsChanged is %i, hour unit is %i, cond is %i", (int)unitsChanged, (int)HOUR_UNIT, (int)(unitsChanged & HOUR_UNIT) );
 
   if ((unitsChanged & HOUR_UNIT) > 0) { // Check date
-    APP_LOG(APP_LOG_LEVEL_INFO,"Update date");
+    APP_LOG(APP_LOG_LEVEL_INFO,"chk weather");
+    updateWeather();
     strftime(s_dayOfWeek, sizeof(s_dayOfWeek), "%a", tickTime);
     strftime(s_dayOfMonth, sizeof(s_dayOfMonth), "%d", tickTime);
     for (int i=0; i < TEXTSIZE; ++i) {
@@ -376,7 +353,7 @@ static void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
     }
   }
 
-  if (s_watchStyle == 0) { // analogue
+  if (persist_read_int(OPT_ANALOGUE) == 1) { // analogue
 
     unsigned _letter = 0;
     s_decayMsg[_letter++] = s_bitmap[kH];
@@ -414,7 +391,7 @@ static void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
 
   // update the step count on the hour. If 11PM then update the average step count
   #ifdef PBL_HEALTH
-  if (unitsChanged & HOUR_UNIT) updateSteps( tickTime->tm_hour == 23 );
+  if (unitsChanged & HOUR_UNIT) updateSteps();
   #endif
 
   layer_mark_dirty(s_atlasLayer);
@@ -492,14 +469,8 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   // Muon cross lines
   graphics_context_set_stroke_width(ctx, 1);
   for (int i=0; i < (int) innerMuon.num_points; ++i) {
-#ifdef PBL_HEALTH
-    if (s_stepProgress >= (i+1)) graphics_context_set_stroke_width(ctx, 3);
-    else graphics_context_set_stroke_width(ctx, 1);
-#endif
     graphics_draw_line(ctx, innerMuon.points[i], outerMuon.points[i]);
   }
-  graphics_context_set_stroke_width(ctx, 1);
-
 
   // Calo cross lines
   int _c = 0;
@@ -511,116 +482,128 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
     }
   }
 
-  // Minbias
-  #define PT_MAX 15
-  graphics_context_set_stroke_color(ctx, COLOR_FALLBACK(GColorCyan,GColorWhite));
-  for (unsigned i=0; i < getN(6, 8); ++i) { // Tracks
-    drawCurvyLine(ctx, 0, 30, rand() % PT_MAX, rand() % TRIG_MAX_ANGLE);
-  }
-  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorPastelYellow,GColorWhite));
-  for (unsigned i=0; i < getN(3, 4); ++i) { // EM calo
-    int angle = randomAngle(1);
-    int size = rand() % N_EMHAD;
-    gpath_rotate_to(s_em[size], angle);
-    gpath_draw_filled(ctx, s_em[size]);
-  }
-  for (unsigned i=0; i < getN(2, 4); ++i) { // HAD calo
-    int angle = randomAngle(2);
-    int size = rand() % N_EMHAD;
-    gpath_rotate_to(s_had[size], angle);
-    gpath_draw_filled(ctx, s_had[size]);
-  }
+  if (s_display == true) {
 
-  // Electron
-  graphics_context_set_stroke_width(ctx, 1);
-  graphics_context_set_stroke_color(ctx, COLOR_FALLBACK(GColorYellow,GColorWhite));
-  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGreen,GColorLightGray));
-  for (int i=0; i < N_DECAY; ++i) {
-    if (s_electron[i] == -1) break;
-    gpath_rotate_to(s_electronPath, s_electron[i]);
-    gpath_draw_filled(ctx, s_electronPath);
-    drawLine(ctx, 0, ID_END, s_electron[i] + TRIG_MAX_ANGLE/2);
-  }
-
-  // Photon
-  for (int i=0; i < N_DECAY; ++i) {
-    if (s_photon[i] == -1) break;
-    gpath_rotate_to(s_electronPath, s_photon[i]);
-    gpath_draw_filled(ctx, s_electronPath);
-  }
-
-  // Jet
-  for (int i=0; i < N_DECAY; ++i) {
-    if (s_bquark[i] == -1) break;
-    int _r1 = rand() % N_EMHAD;
-    int _r2 = rand() % N_EMHAD;
-    gpath_rotate_to(s_hadJetPath[_r1], s_bquark[i]);
-    gpath_rotate_to(s_emJetPath[_r2], s_bquark[i]);
-    graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkCandyAppleRed,GColorLightGray));
-    gpath_draw_filled(ctx, s_hadJetPath[_r1]);
-    graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGreen,GColorLightGray));
-    gpath_draw_filled(ctx, s_emJetPath[_r2]);
-    for (unsigned j=0; j < getN(4,2); ++j) {
-      drawLine(ctx, 0, ID_END, fuzzAngle(s_bquark[i] + TRIG_MAX_ANGLE/2, 10));
+    // Minbias
+    #define PT_MAX 15
+    graphics_context_set_stroke_color(ctx, COLOR_FALLBACK(GColorCyan,GColorWhite));
+    for (unsigned i=0; i < getN(6, 8); ++i) { // Tracks
+      drawCurvyLine(ctx, 0, 30, rand() % PT_MAX, rand() % TRIG_MAX_ANGLE);
     }
-  }
+    graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorPastelYellow,GColorWhite));
+    for (unsigned i=0; i < getN(3, 4); ++i) { // EM calo
+      int angle = randomAngle(1);
+      int size = rand() % N_EMHAD;
+      gpath_rotate_to(s_em[size], angle);
+      gpath_draw_filled(ctx, s_em[size]);
+    }
+    for (unsigned i=0; i < getN(2, 4); ++i) { // HAD calo
+      int angle = randomAngle(2);
+      int size = rand() % N_EMHAD;
+      gpath_rotate_to(s_had[size], angle);
+      gpath_draw_filled(ctx, s_had[size]);
+    }
 
-  // Muon
-  graphics_context_set_stroke_color(ctx, COLOR_FALLBACK(GColorRed, GColorWhite));
-  graphics_context_set_stroke_width(ctx, 3);
-  for (int i=0; i < N_DECAY; ++i) {
-    if (s_muon[i] == -1) break;
-    drawLine(ctx, 0, 200, s_muon[i]);
-  }
+    // Electron
+    graphics_context_set_stroke_width(ctx, 1);
+    graphics_context_set_stroke_color(ctx, COLOR_FALLBACK(GColorYellow,GColorWhite));
+    graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGreen,GColorLightGray));
+    for (int i=0; i < N_DECAY; ++i) {
+      if (s_electron[i] == -1) break;
+      gpath_rotate_to(s_electronPath, s_electron[i]);
+      gpath_draw_filled(ctx, s_electronPath);
+      drawLine(ctx, 0, ID_END, s_electron[i] + TRIG_MAX_ANGLE/2);
+    }
 
-  // DECAY MSG
-  unsigned _msgSize = 0;
-  for (unsigned i=0; i < MAX_STR; ++i) {
-    if (s_decayMsg[i] == NULL) break;
-    ++_msgSize;
-  }
-  GRect _bitmapBox = GRect(XCENTRE - (_msgSize*20)/7 /*tweak 5/2*/, PBL_IF_ROUND_ELSE(12,6), 5, 7);
-  for (unsigned i=0; i < MAX_STR; ++i) {
-    if (s_decayMsg[i] == NULL) break;
-    graphics_draw_bitmap_in_rect(ctx, s_decayMsg[i], _bitmapBox);
-    _bitmapBox.origin.x += 6;
-  }
+    // Photon
+    for (int i=0; i < N_DECAY; ++i) {
+      if (s_photon[i] == -1) break;
+      gpath_rotate_to(s_electronPath, s_photon[i]);
+      gpath_draw_filled(ctx, s_electronPath);
+    }
+
+    // Jet
+    for (int i=0; i < N_DECAY; ++i) {
+      if (s_bquark[i] == -1) break;
+      int _r1 = rand() % N_EMHAD;
+      int _r2 = rand() % N_EMHAD;
+      gpath_rotate_to(s_hadJetPath[_r1], s_bquark[i]);
+      gpath_rotate_to(s_emJetPath[_r2], s_bquark[i]);
+      graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkCandyAppleRed,GColorLightGray));
+      gpath_draw_filled(ctx, s_hadJetPath[_r1]);
+      graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGreen,GColorLightGray));
+      gpath_draw_filled(ctx, s_emJetPath[_r2]);
+      for (unsigned j=0; j < getN(4,2); ++j) {
+        drawLine(ctx, 0, ID_END, fuzzAngle(s_bquark[i] + TRIG_MAX_ANGLE/2, 10));
+      }
+    }
+
+    // Muon
+    graphics_context_set_stroke_color(ctx, COLOR_FALLBACK(GColorRed, GColorWhite));
+    graphics_context_set_stroke_width(ctx, 3);
+    for (int i=0; i < N_DECAY; ++i) {
+      if (s_muon[i] == -1) break;
+      drawLine(ctx, 0, 200, s_muon[i]);
+    }
+
+    // DECAY MSG
+    if (persist_read_int(OPT_DECAY) == 1) {
+      unsigned _msgSize = 0;
+      for (unsigned i=0; i < MAX_STR; ++i) {
+        if (s_decayMsg[i] == NULL) break;
+        ++_msgSize;
+      }
+      GRect _bitmapBox = GRect(XCENTRE - (_msgSize*20)/7 /*tweak 5/2*/, PBL_IF_ROUND_ELSE(12,6), 5, 7);
+      for (unsigned i=0; i < MAX_STR; ++i) {
+        if (s_decayMsg[i] == NULL) break;
+        graphics_draw_bitmap_in_rect(ctx, s_decayMsg[i], _bitmapBox);
+        _bitmapBox.origin.x += 6;
+      }
+    }
+
+  } // if s_display == true
 
   // TIME
-  if (s_watchStyle > 0) {
+  if (persist_read_int(OPT_ANALOGUE) == 0) {
     draw3DText(ctx, timeRect, getFont(), s_clockA, 2, GTextAlignmentLeft, GColorWhite, GColorBlack);
     draw3DText(ctx, timeRect, getFont(), s_clockB, 2, GTextAlignmentRight, GColorWhite, GColorBlack);
   }
 
   // DATE
-  graphics_context_set_text_color(ctx, GColorBlack);
   int l = PBL_IF_ROUND_ELSE(27,2), w = 30, h = 34;
-  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
-  graphics_fill_rect(ctx, GRect(l,l,w,h), 4, GCornersAll);
-  graphics_context_set_fill_color(ctx, GColorWhite);
-  graphics_fill_rect(ctx, GRect(l+2,l+2,w-4,h-4), 4, GCornersAll);
-  graphics_draw_text(ctx, s_dayOfWeek, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(l, l+1, w, h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-  graphics_draw_text(ctx, s_dayOfMonth, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(l, l+11, w, h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  if (persist_read_int(OPT_CALENDAR) == 1) {
+    graphics_context_set_text_color(ctx, GColorBlack);
+    graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
+    graphics_fill_rect(ctx, GRect(l,l,w,h), 4, GCornersAll);
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_fill_rect(ctx, GRect(l+2,l+2,w-4,h-4), 4, GCornersAll);
+    graphics_draw_text(ctx, s_dayOfWeek, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(l, l+1, w, h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    graphics_draw_text(ctx, s_dayOfMonth, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(l, l+11, w, h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  }
 
   // WEATHER
-  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
-  graphics_fill_rect(ctx, GRect(WIDTH-w-l,l,w,h), 4, GCornersAll);
-  graphics_context_set_fill_color(ctx, GColorWhite);
-  graphics_fill_rect(ctx, GRect(WIDTH-w-l+2,l+2,w-4,h-4), 4, GCornersAll);
-  graphics_draw_text(ctx, s_temperature, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(WIDTH-w-l, l-1, w, h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-  graphics_draw_bitmap_in_rect(ctx, s_bitmapWeather[ s_weatherCode ], GRect(WIDTH-w-l+3, l+14, 24, 17));
+  if (s_weatherValid == true && persist_read_int(OPT_WEATHER) == 1) {
+    graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
+    graphics_fill_rect(ctx, GRect(WIDTH-w-l,l,w,h), 4, GCornersAll);
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_fill_rect(ctx, GRect(WIDTH-w-l+2,l+2,w-4,h-4), 4, GCornersAll);
+    graphics_draw_text(ctx, s_temperature, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(WIDTH-w-l, l-1, w, h), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+    graphics_draw_bitmap_in_rect(ctx, s_bitmapWeather[ s_weatherCode ], GRect(WIDTH-w-l+3, l+14, 24, 17));
+  }
 
   // BATTERY
-  graphics_context_set_stroke_color(ctx, GColorWhite);
-  graphics_context_set_fill_color(ctx, GColorWhite);
-  graphics_context_set_stroke_width(ctx, 1);
-  GPoint _b = GPoint(XCENTRE-9, HEIGHT - PBL_IF_ROUND_ELSE(20, 14) );
-  graphics_draw_rect(ctx, GRect(_b.x       , _b.y      , 18, 9));
-  graphics_draw_rect(ctx, GRect(_b.x + 18  , _b.y + 2  , 2, 5));
-  graphics_fill_rect(ctx, GRect(_b.x + 2  ,  _b.y + 2  ,s_battery.charge_percent/7, 5), 0, GCornersAll); // 100%=14 pixels
+  if (persist_read_int(OPT_BATTERY) == 1) {
+    graphics_context_set_stroke_color(ctx, GColorWhite);
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_context_set_stroke_width(ctx, 1);
+    GPoint _b = GPoint(XCENTRE-9, HEIGHT - PBL_IF_ROUND_ELSE(20, 14) );
+    graphics_draw_rect(ctx, GRect(_b.x       , _b.y      , 18, 9));
+    graphics_draw_rect(ctx, GRect(_b.x + 18  , _b.y + 2  , 2, 5));
+    graphics_fill_rect(ctx, GRect(_b.x + 2  ,  _b.y + 2  ,s_battery.charge_percent/7, 5), 0, GCornersAll); // 100%=14 pixels
+  }
 
-
-  if (s_bluetoothStatus == false) {
+  // BLUETOOTH
+  if (persist_read_int(OPT_BLUETOOTH) == 1 && s_bluetoothStatus == false) {
     w = 24;
     h = 35;
     graphics_context_set_fill_color(ctx, GColorWhite);
@@ -661,8 +644,7 @@ static void mainWindowLoad(Window* window) {
   gpath_move_to(s_electronPath, centre);
 
   s_mono = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_MONO_49));
-  s_comic = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_COMIC_49));
-  s_weather = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_WEATHER_14));
+  //s_comic = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_COMIC_49));
 
   s_bitmap[kH]  = gbitmap_create_with_resource(RESOURCE_ID_H);
   s_bitmap[kTo] = gbitmap_create_with_resource(RESOURCE_ID_TO);
@@ -692,7 +674,6 @@ static void mainWindowLoad(Window* window) {
   s_battery = battery_state_service_peek();
   bluetooth_connection_service_subscribe(updateBluetooth);
   s_bluetoothStatus = bluetooth_connection_service_peek();
-  updateWeather();
 
   // Make sure the time and steps are displayed from the start
   PBL_IF_HEALTH_ELSE( updateSteps(false), /*noop*/ {} );
@@ -702,6 +683,7 @@ static void mainWindowLoad(Window* window) {
 
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tickHandler);
+  s_display = true;
 }
 
 static void mainWindowUnload(Window *window) {
@@ -710,6 +692,7 @@ static void mainWindowUnload(Window *window) {
 
   battery_state_service_unsubscribe();
   bluetooth_connection_service_unsubscribe();
+  destroyCommunication();
 
   gpath_destroy(s_innerMuon);
   gpath_destroy(s_outerMuon);
@@ -721,8 +704,7 @@ static void mainWindowUnload(Window *window) {
     gpath_destroy(s_emJetPath[s]);
   }
   fonts_unload_custom_font(s_mono);
-  fonts_unload_custom_font(s_comic);
-  fonts_unload_custom_font(s_weather);
+  //fonts_unload_custom_font(s_comic);
   for (int b=0; b < N_BITMAP; ++b) {
     gbitmap_destroy(s_bitmap[b]);
     gbitmap_destroy(s_bitmapWeather[b]);
@@ -734,8 +716,19 @@ static void mainWindowUnload(Window *window) {
 static void init() {
   s_mainWindow = window_create();
 
-  if (persist_exists(KEY_TOTAL_STEPS) == false) persist_write_int(KEY_TOTAL_STEPS, 1000);
-  if (persist_exists(KEY_TOTAL_DAYS) == false) persist_write_int(KEY_TOTAL_DAYS, 1);
+  if (persist_exists(OPT_ANALOGUE) == false) persist_write_int(OPT_ANALOGUE, 0);
+  if (persist_exists(OPT_TEMP_UNIT) == false) persist_write_int(OPT_TEMP_UNIT, TEMP_UNIT_C);
+  if (persist_exists(OPT_CALENDAR) == false) persist_write_int(OPT_CALENDAR, 1);
+  if (persist_exists(OPT_WEATHER) == false) persist_write_int(OPT_WEATHER, 1);
+  if (persist_exists(OPT_BATTERY) == false) persist_write_int(OPT_BATTERY, 1);
+  if (persist_exists(OPT_DECAY) == false) persist_write_int(OPT_DECAY, 1);
+  if (persist_exists(OPT_ACTIVITY) == false) persist_write_int(OPT_ACTIVITY, 1);
+  if (persist_exists(OPT_BLUETOOTH) == false) persist_write_int(OPT_BLUETOOTH, 1);
+  if (persist_exists(DATA_WEATHER_TEMP) == false) persist_write_int(DATA_WEATHER_TEMP, 0);
+  if (persist_exists(DATA_WEATHER_ICON) == false) persist_write_int(DATA_WEATHER_ICON, 0);
+  if (persist_exists(DATA_WEATHER_TIME) == false) persist_write_int(DATA_WEATHER_TIME, 0);
+
+  registerCommunication();
 
   window_set_window_handlers(s_mainWindow, (WindowHandlers) {
     .load = mainWindowLoad,
