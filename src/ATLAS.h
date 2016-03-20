@@ -34,3 +34,5 @@
 
 void updateWeather();
 void tickHandler(struct tm* tickTime, TimeUnits unitsChanged);
+
+Layer* getLayer();

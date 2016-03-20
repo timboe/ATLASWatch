@@ -20,13 +20,19 @@ void inboxReceiveHandler(DictionaryIterator *iter, void *context) {
   }
 
   Tuple* _analogue = dict_find(iter, KEY_TOWATCH_ANALOGUE);
-  if (_analogue) persist_write_int(OPT_ANALOGUE, _analogue->value->int32);
+  int _redo = false;
+  if (_analogue) {
+    if (persist_read_int(OPT_ANALOGUE) != _analogue->value->int32) _redo = true;
+    persist_write_int(OPT_ANALOGUE, _analogue->value->int32);
+  }
 
   Tuple* _celsius = dict_find(iter, KEY_TOWATCH_CELSIUS);
   Tuple* _fahrenheit = dict_find(iter, KEY_TOWATCH_FAHRENHEIT);
+  Tuple* _kelvin = dict_find(iter, KEY_TOWATCH_FAHRENHEIT);
   if (_celsius && _celsius->value->int32 > 0) persist_write_int(OPT_TEMP_UNIT, TEMP_UNIT_C);
   else if (_fahrenheit && _fahrenheit->value->int32 > 0) persist_write_int(OPT_TEMP_UNIT, TEMP_UNIT_F);
-  else persist_write_int(OPT_TEMP_UNIT, TEMP_UNIT_K); // Kelvin
+  else if (_kelvin && _kelvin->value->int32 > 0) persist_write_int(OPT_TEMP_UNIT, TEMP_UNIT_K); // Kelvin
+  if (_celsius || _kelvin || _fahrenheit) updateWeather();
 
   Tuple* _calendar = dict_find(iter, KEY_TOWATCH_CALENDAR);
   if (_calendar) persist_write_int(OPT_CALENDAR, _calendar->value->int32);
@@ -47,19 +53,22 @@ void inboxReceiveHandler(DictionaryIterator *iter, void *context) {
   if (_bluetooth) persist_write_int(OPT_BLUETOOTH, _bluetooth->value->int32);
 
   Tuple* _weatherTemp = dict_find(iter, KEY_TOWATCH_WEATHER_TEMP);
-  if (_weatherTemp) persist_write_int(DATA_WEATHER_TEMP, _weatherTemp->value->int32);
-
   Tuple* _weatherIcon = dict_find(iter, KEY_TOWATCH_WEATHER_ICON);
-  if (_weatherIcon) persist_write_int(DATA_WEATHER_ICON, _weatherIcon->value->int32);
 
   if (_weatherIcon && _weatherTemp) {
     persist_write_int(DATA_WEATHER_TIME, time(NULL)); // Cache for 3 hours
+    persist_write_int(DATA_WEATHER_TEMP, _weatherTemp->value->int32);
+    persist_write_int(DATA_WEATHER_ICON, _weatherIcon->value->int32);
+    updateWeather();
   }
 
-  time_t _t = time(NULL);
-  struct tm* _time = localtime(&_t);
-  tickHandler(_time, HOUR_UNIT);
-
+  if (_redo == true) {
+    time_t _t = time(NULL);
+    struct tm* _time = localtime(&_t);
+    tickHandler(_time, HOUR_UNIT);
+  } else {
+    layer_mark_dirty(getLayer());
+  }
 }
 
 void inboxRecieveFailed(AppMessageResult reason, void *context) {

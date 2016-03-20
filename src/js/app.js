@@ -66,6 +66,7 @@ Pebble.addEventListener('webviewclosed', function(e) {
 
   dict['KEY_TOWATCH_CELSIUS']     = configData['op_celcius'];
   dict['KEY_TOWATCH_FAHRENHEIT']  = configData['op_fahrenheit'];
+  dict['KEY_TOWATCH_KELVIN']      = configData['op_kelvin'];
   // Else Kelvin
 
   dict['KEY_TOWATCH_CALENDAR']    = configData['op_calendar'];
