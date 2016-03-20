@@ -54,8 +54,11 @@ void inboxReceiveHandler(DictionaryIterator *iter, void *context) {
 
   if (_weatherIcon && _weatherTemp) {
     persist_write_int(DATA_WEATHER_TIME, time(NULL)); // Cache for 3 hours
-    updateWeather(); // We have the data, show it
   }
+
+  time_t _t = time(NULL);
+  struct tm* _time = localtime(&_t);
+  tickHandler(_time, HOUR_UNIT);
 
 }
 

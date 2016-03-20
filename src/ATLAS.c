@@ -329,7 +329,7 @@ GFont getFont() {
   return s_mono;
 }
 
-static void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
+void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
 
   for (unsigned i=0; i < N_DECAY; ++i) {
     s_muon[i] = -1;
@@ -344,7 +344,7 @@ static void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
   APP_LOG(APP_LOG_LEVEL_INFO,"UnitsChanged is %i, hour unit is %i, cond is %i", (int)unitsChanged, (int)HOUR_UNIT, (int)(unitsChanged & HOUR_UNIT) );
 
   if ((unitsChanged & HOUR_UNIT) > 0) { // Check date
-    APP_LOG(APP_LOG_LEVEL_INFO,"chk weather");
+    APP_LOG(APP_LOG_LEVEL_INFO,"tick chk weather");
     updateWeather();
     strftime(s_dayOfWeek, sizeof(s_dayOfWeek), "%a", tickTime);
     strftime(s_dayOfMonth, sizeof(s_dayOfMonth), "%d", tickTime);
@@ -460,9 +460,27 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
 
   graphics_context_set_stroke_color(ctx, GColorWhite);
   graphics_context_set_stroke_width(ctx, 3);
+#ifdef PBL_HEALTH
+  if (persist_read_int(OPT_ACTIVITY == 1)) {
+    graphics_context_set_stroke_width(ctx, 1);
+  }
+#endif
   graphics_draw_circle(ctx, centre, ID_END);
   graphics_draw_circle(ctx, centre, EM_END);
   graphics_draw_circle(ctx, centre, HCAL_END);
+#ifdef PBL_HEALTH
+  // Do health
+  if (persist_read_int(OPT_ACTIVITY == 1)) {
+    graphics_context_set_stroke_width(ctx, 3);
+    GRect _rID = GRect(centre.x - ID_END, centre.y - ID_END, 2 * ID_END, 2 * ID_END);
+    GRect _rEM = GRect(centre.x - EM_END, centre.y - EM_END, 2 * EM_END, 2 * EM_END);
+    GRect _rHC = GRect(centre.x - HCAL_END, centre.y - HCAL_END, 2 * HCAL_END, 2 * HCAL_END);
+    graphics_draw_arc(ctx, _rID, GOvalScaleModeFitCircle, 0, s_stepProgress);
+    graphics_draw_arc(ctx, _rEM, GOvalScaleModeFitCircle, 0, s_stepProgress);
+    graphics_draw_arc(ctx, _rHC, GOvalScaleModeFitCircle, 0, s_stepProgress);
+  }
+#endif
+  graphics_context_set_stroke_width(ctx, 3);
   gpath_draw_outline(ctx, s_innerMuon);
   gpath_draw_outline(ctx, s_outerMuon);
 
@@ -571,8 +589,8 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
 
   // DATE
   int l = PBL_IF_ROUND_ELSE(27,2), w = 30, h = 34;
+  graphics_context_set_text_color(ctx, GColorBlack);
   if (persist_read_int(OPT_CALENDAR) == 1) {
-    graphics_context_set_text_color(ctx, GColorBlack);
     graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
     graphics_fill_rect(ctx, GRect(l,l,w,h), 4, GCornersAll);
     graphics_context_set_fill_color(ctx, GColorWhite);

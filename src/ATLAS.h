@@ -33,3 +33,4 @@
 #define TEMP_UNIT_K 2
 
 void updateWeather();
+void tickHandler(struct tm* tickTime, TimeUnits unitsChanged);

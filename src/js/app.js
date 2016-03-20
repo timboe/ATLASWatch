@@ -51,7 +51,7 @@ Pebble.addEventListener('ready',
 );
 
 Pebble.addEventListener('showConfiguration', function() {
-  var url = 'http://tim-martin.co.uk/timesink/configuration/index.html';
+  var url = 'http://timboe.github.io/ATLASWatch/index.html';
   console.log('JS: Open conf page ' + url);
   Pebble.openURL(url);
 });
