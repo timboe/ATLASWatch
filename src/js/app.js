@@ -61,20 +61,20 @@ Pebble.addEventListener('webviewclosed', function(e) {
   console.log('JS: Conf page returned: ' + JSON.stringify(configData));
 
   var dict = {};
-  dict['KEY_TOWATCH_ANALOGUE']    = configData['op_analogue'];
+  dict['KEY_TOWATCH_ANALOGUE']    = configData['op_analogue'] ? 1 : 0;
   // Else digital
 
-  dict['KEY_TOWATCH_CELSIUS']     = configData['op_celcius'];
-  dict['KEY_TOWATCH_FAHRENHEIT']  = configData['op_fahrenheit'];
-  dict['KEY_TOWATCH_KELVIN']      = configData['op_kelvin'];
+  dict['KEY_TOWATCH_CELSIUS']     = configData['op_celcius'] ? 1 : 0;
+  dict['KEY_TOWATCH_FAHRENHEIT']  = configData['op_fahrenheit'] ? 1 : 0;
+  dict['KEY_TOWATCH_KELVIN']      = configData['op_kelvin'] ? 1 : 0;
   // Else Kelvin
 
-  dict['KEY_TOWATCH_CALENDAR']    = configData['op_calendar'];
-  dict['KEY_TOWATCH_WEATHER']     = configData['op_weather'];
-  dict['KEY_TOWATCH_BATTERY']     = configData['op_battery'];
-  dict['KEY_TOWATCH_DECAY']       = configData['op_decay'];
-  dict['KEY_TOWATCH_ACTIVITY']    = configData['op_activity'];
-  dict['KEY_TOWATCH_BLUETOOTH']   = configData['op_bluetooth'];
+  dict['KEY_TOWATCH_CALENDAR']    = configData['op_calendar'] ? 1 : 0;
+  dict['KEY_TOWATCH_WEATHER']     = configData['op_weather'] ? 1 : 0;
+  dict['KEY_TOWATCH_BATTERY']     = configData['op_battery'] ? 1 : 0;
+  dict['KEY_TOWATCH_DECAY']       = configData['op_decay'] ? 1 : 0;
+  dict['KEY_TOWATCH_ACTIVITY']    = configData['op_activity'] ? 1 : 0;
+  dict['KEY_TOWATCH_BLUETOOTH']   = configData['op_bluetooth'] ? 1 : 0;
 
   // Send to watchapp
   Pebble.sendAppMessage(dict, function() {

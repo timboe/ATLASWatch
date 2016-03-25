@@ -708,9 +708,6 @@ static void mainWindowLoad(Window* window) {
 
   // Make sure the time and steps are displayed from the start
   PBL_IF_HEALTH_ELSE( updateSteps(), /*noop*/ {} );
-  //time_t _t = time(NULL);
-  //struct tm* _time = localtime(&_t);
-  //tickHandler(_time, HOUR_UNIT);
 
   battery_state_service_subscribe(updateBattery);
   s_battery = battery_state_service_peek();
@@ -749,7 +746,7 @@ static void mainWindowUnload(Window *window) {
 
 static void init() {
   s_mainWindow = window_create();
-  light_enable(1);
+  // light_enable(1);
 
   window_set_window_handlers(s_mainWindow, (WindowHandlers) {
     .load = mainWindowLoad,
