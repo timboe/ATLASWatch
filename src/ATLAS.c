@@ -2,6 +2,7 @@
 #include <ATLAS.h>
 #include <communication.h>
 #include <gpath_builder.h>
+#include "enamel.h"
 
 static Window* s_mainWindow;
 static Layer* s_atlasLayer = NULL;
@@ -224,7 +225,7 @@ void chooseNewDecay() {
 }
 
 void updateWeather() {
-  if (persist_read_int(OPT_WEATHER) == 0) return;
+  if (!enamel_get_KEY_TOWATCH_WEATHER()) return;
 
   // Check buffer
   int32_t _timeOfWeather = persist_read_int(DATA_WEATHER_TIME);
@@ -237,18 +238,18 @@ void updateWeather() {
 
   } else { // use cache
 
-    int _tempType = persist_read_int(OPT_TEMP_UNIT);
+    KEY_TOWATCH_TEMP_UNITValue _tempType = enamel_get_KEY_TOWATCH_TEMP_UNIT();
     s_tempValue = persist_read_int(DATA_WEATHER_TEMP);
     s_weatherCode = persist_read_int(DATA_WEATHER_ICON);
 
-    if (_tempType == TEMP_UNIT_F) {
+    if (_tempType == KEY_TOWATCH_TEMP_UNIT_FAHRENHEIT) {
       s_tempValue = ((s_tempValue*5)/9) + 32;
       snprintf(s_temperature, sizeof(s_temperature), "%i", s_tempValue);
       strcat(s_temperature, "F");
-    } else if (_tempType == TEMP_UNIT_C) {
+    } else if (_tempType == KEY_TOWATCH_TEMP_UNIT_CELSIUS) {
       snprintf(s_temperature, sizeof(s_temperature), "%i", s_tempValue);
       strcat(s_temperature, "C");
-    } else if (_tempType == TEMP_UNIT_K) {
+    } else if (_tempType == KEY_TOWATCH_TEMP_UNIT_KELVIN) {
       s_tempValue += 273;
       snprintf(s_temperature, sizeof(s_temperature), "%i", s_tempValue);
       strcat(s_temperature, "K");
@@ -261,13 +262,13 @@ void updateWeather() {
 }
 
 void updateBattery(BatteryChargeState charge) {
-  if (persist_read_int(OPT_BATTERY) == 0) return;
+  if (!enamel_get_KEY_TOWATCH_BATTERY()) return;
   s_battery = charge;
   if (s_atlasLayer != NULL) layer_mark_dirty(s_atlasLayer);
 }
 
 void updateBluetooth(bool bluetooth) {
-  if (persist_read_int(OPT_BLUETOOTH) == 0) {
+  if (!enamel_get_KEY_TOWATCH_BLUETOOTH()) {
     s_bluetoothStatus = true;
     return;
   }
@@ -278,7 +279,7 @@ void updateBluetooth(bool bluetooth) {
 
 #ifdef PBL_HEALTH
 void updateSteps() {
-  if (persist_read_int(OPT_ACTIVITY) == 0) return;
+  if (!enamel_get_KEY_TOWATCH_ACTIVITY()) return;
   HealthMetric _metric = HealthMetricStepCount;
   time_t _start = time_start_of_today();
   time_t _endNow = time(NULL);
@@ -354,7 +355,7 @@ void tickHandler(struct tm* tickTime, TimeUnits unitsChanged) {
     if (s_dayOfWeek[i] >= 'a' && s_dayOfWeek[i] <= 'z') s_dayOfWeek[i] -= 'a' - 'A'; //ASCII manipulation FTW (toupper)
   }
 
-  if (persist_read_int(OPT_ANALOGUE) == 1) { // analogue
+  if (enamel_get_KEY_TOWATCH_ANALOGUE() == KEY_TOWATCH_ANALOGUE_ANALOGUE) { // analogue
 
     unsigned _letter = 0;
     s_decayMsg[_letter++] = s_bitmap[kH];
@@ -468,7 +469,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   graphics_context_set_stroke_color(ctx, GColorWhite);
   graphics_context_set_stroke_width(ctx, 3);
 #ifdef PBL_HEALTH
-  if (persist_read_int(OPT_ACTIVITY) ==  1) {
+  if (enamel_get_KEY_TOWATCH_ACTIVITY()) {
     graphics_context_set_stroke_width(ctx, 1);
   }
 #endif
@@ -477,7 +478,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   graphics_draw_circle(ctx, centre, HCAL_END);
 #ifdef PBL_HEALTH
   // Do health
-  if (persist_read_int(OPT_ACTIVITY) == 1) {
+  if (enamel_get_KEY_TOWATCH_ACTIVITY()) {
     graphics_context_set_stroke_width(ctx, 3);
     GRect _rID = GRect(centre.x - ID_END, centre.y - ID_END, 2 * ID_END, 2 * ID_END);
     GRect _rEM = GRect(centre.x - EM_END, centre.y - EM_END, 2 * EM_END, 2 * EM_END);
@@ -571,7 +572,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   }
 
   // DECAY MSG
-  if (persist_read_int(OPT_DECAY) == 1) {
+  if (enamel_get_KEY_TOWATCH_DECAY()) {
     unsigned _msgSize = 0;
     for (unsigned i=0; i < MAX_STR; ++i) {
       if (s_decayMsg[i] == NULL) break;
@@ -586,7 +587,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   }
 
   // TIME
-  if (persist_read_int(OPT_ANALOGUE) == 0) {
+  if (enamel_get_KEY_TOWATCH_ANALOGUE() == KEY_TOWATCH_ANALOGUE_DIGITAL) {
     draw3DText(ctx, timeRect, getFont(), s_clockA, 2, GTextAlignmentLeft, GColorWhite, GColorBlack);
     draw3DText(ctx, timeRect, getFont(), s_clockB, 2, GTextAlignmentRight, GColorWhite, GColorBlack);
   }
@@ -594,7 +595,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   // DATE
   int l = PBL_IF_ROUND_ELSE(27,2), w = 30, h = 34;
   graphics_context_set_text_color(ctx, GColorBlack);
-  if (persist_read_int(OPT_CALENDAR) == 1) {
+  if (enamel_get_KEY_TOWATCH_CALENDAR()) {
     graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
     graphics_fill_rect(ctx, GRect(l,l,w,h), 4, GCornersAll);
     graphics_context_set_fill_color(ctx, GColorWhite);
@@ -604,7 +605,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   }
 
   // WEATHER
-  if (s_weatherValid == true && persist_read_int(OPT_WEATHER) == 1) {
+  if (s_weatherValid == true && enamel_get_KEY_TOWATCH_WEATHER()) {
     graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
     graphics_fill_rect(ctx, GRect(WIDTH-w-l,l,w,h), 4, GCornersAll);
     graphics_context_set_fill_color(ctx, GColorWhite);
@@ -614,7 +615,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   }
 
   // BATTERY
-  if (persist_read_int(OPT_BATTERY) == 1) {
+  if (enamel_get_KEY_TOWATCH_BATTERY()) {
     graphics_context_set_stroke_color(ctx, GColorWhite);
     graphics_context_set_fill_color(ctx, GColorWhite);
     graphics_context_set_stroke_width(ctx, 1);
@@ -625,7 +626,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   }
 
   // BLUETOOTH
-  if (persist_read_int(OPT_BLUETOOTH) == 1 && s_bluetoothStatus == false) {
+  if (enamel_get_KEY_TOWATCH_BLUETOOTH() && s_bluetoothStatus == false) {
     w = 24;
     h = 35;
     graphics_context_set_fill_color(ctx, GColorWhite);
@@ -692,14 +693,6 @@ static void mainWindowLoad(Window* window) {
 
   s_bitmapBluetooth = gbitmap_create_with_resource(RESOURCE_ID_BT);
 
-  if (persist_exists(OPT_ANALOGUE) == false) persist_write_int(OPT_ANALOGUE, 0);
-  if (persist_exists(OPT_TEMP_UNIT) == false) persist_write_int(OPT_TEMP_UNIT, TEMP_UNIT_C);
-  if (persist_exists(OPT_CALENDAR) == false) persist_write_int(OPT_CALENDAR, 1);
-  if (persist_exists(OPT_WEATHER) == false) persist_write_int(OPT_WEATHER, 1);
-  if (persist_exists(OPT_BATTERY) == false) persist_write_int(OPT_BATTERY, 1);
-  if (persist_exists(OPT_DECAY) == false) persist_write_int(OPT_DECAY, 1);
-  if (persist_exists(OPT_ACTIVITY) == false) persist_write_int(OPT_ACTIVITY, 1);
-  if (persist_exists(OPT_BLUETOOTH) == false) persist_write_int(OPT_BLUETOOTH, 1);
   if (persist_exists(DATA_WEATHER_TEMP) == false) persist_write_int(DATA_WEATHER_TEMP, 0);
   if (persist_exists(DATA_WEATHER_ICON) == false) persist_write_int(DATA_WEATHER_ICON, 0);
   if (persist_exists(DATA_WEATHER_TIME) == false) persist_write_int(DATA_WEATHER_TIME, 0);

@@ -1,0 +1,77 @@
+[
+{ "type": "heading", "defaultValue": "Higgs O'Clock" },
+{
+  "type": "radiogroup",
+  "appKey": "KEY_TOWATCH_ANALOGUE",
+  "defaultValue": "1",
+  "label": "Mode",
+  "options": [
+    { 
+      "label": "Analogue", 
+      "value": 0
+    },
+    { 
+      "label": "Digital",
+      "value": 1 
+    }
+  ],
+  "description" : "Analogue (Green electron for hour, red muon for minute)"
+},
+{
+  "type": "toggle",
+  "appKey": "KEY_TOWATCH_CALENDAR",
+  "label": "Show Calendar",
+  "defaultValue" : true
+},
+{
+  "type": "toggle",
+  "appKey": "KEY_TOWATCH_WEATHER",
+  "label": "Show Weather",
+  "defaultValue" : true
+},
+{
+  "type": "toggle",
+  "appKey": "KEY_TOWATCH_BATTERY",
+  "label": "Show Battery",
+  "defaultValue" : true
+},
+{
+  "type": "toggle",
+  "appKey": "KEY_TOWATCH_BLUETOOTH",
+  "label": "Show Bluetooth Disconnect Notification",
+  "defaultValue" : true
+},
+{
+  "type": "toggle",
+  "appKey": "KEY_TOWATCH_DECAY",
+  "label": "Show Higgs Decay Information",
+  "defaultValue" : true
+},
+{
+  "type": "toggle",
+  "appKey": "KEY_TOWATCH_ACTIVITY",
+  "label": "Show Daily Activity Level",
+  "defaultValue" : true
+},
+{
+  "type": "radiogroup",
+  "appKey": "KEY_TOWATCH_TEMP_UNIT",
+  "defaultValue": "0",
+  "label": "Temperature Unit",
+  "options": [
+    { 
+      "label": "Celsius", 
+      "value": 0
+    },
+    { 
+      "label": "Fahrenheit", 
+      "value": 1
+    },
+    { 
+      "label": "Kelvin", 
+      "value": 2
+    }
+  ]
+},
+{ "type": "submit", "defaultValue": "Done" }
+]

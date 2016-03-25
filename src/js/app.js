@@ -41,6 +41,13 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
+
+var appinfo = require('appinfo.json');
+
+var Clay = require('clay');
+var clayConfig = require('config.json');
+var clay = new Clay(clayConfig, null, {autoHandleEvents: false});
+
 Pebble.addEventListener('ready',
   function(e) {
     // Any saved data?
@@ -50,39 +57,20 @@ Pebble.addEventListener('ready',
   }
 );
 
-Pebble.addEventListener('showConfiguration', function() {
-  var url = 'http://timboe.github.io/ATLASWatch/index.html';
-  console.log('JS: Open conf page ' + url);
-  Pebble.openURL(url);
+Pebble.addEventListener('showConfiguration', function(e) {
+  Pebble.openURL(clay.generateUrl());
 });
 
 Pebble.addEventListener('webviewclosed', function(e) {
-  var configData = JSON.parse(decodeURIComponent(e.response));
-  console.log('JS: Conf page returned: ' + JSON.stringify(configData));
+  if (e && !e.response) { return; }
 
-  var dict = {};
-  dict['KEY_TOWATCH_ANALOGUE']    = configData['op_analogue'] ? 1 : 0;
-  // Else digital
-
-  dict['KEY_TOWATCH_CELSIUS']     = configData['op_celcius'] ? 1 : 0;
-  dict['KEY_TOWATCH_FAHRENHEIT']  = configData['op_fahrenheit'] ? 1 : 0;
-  dict['KEY_TOWATCH_KELVIN']      = configData['op_kelvin'] ? 1 : 0;
-  // Else Kelvin
-
-  dict['KEY_TOWATCH_CALENDAR']    = configData['op_calendar'] ? 1 : 0;
-  dict['KEY_TOWATCH_WEATHER']     = configData['op_weather'] ? 1 : 0;
-  dict['KEY_TOWATCH_BATTERY']     = configData['op_battery'] ? 1 : 0;
-  dict['KEY_TOWATCH_DECAY']       = configData['op_decay'] ? 1 : 0;
-  dict['KEY_TOWATCH_ACTIVITY']    = configData['op_activity'] ? 1 : 0;
-  dict['KEY_TOWATCH_BLUETOOTH']   = configData['op_bluetooth'] ? 1 : 0;
-
-  // Send to watchapp
-  Pebble.sendAppMessage(dict, function() {
-    console.log('JS: Send successful: ' + JSON.stringify(dict));
+  // Send settings to Pebble watchapp
+  Pebble.sendAppMessage(clay.getSettings(e.response), function(e) {
+    console.log('Sent config data to Pebble');
   }, function() {
-    console.log('JS: Send failed!');
+    console.log('Failed to send config data!');
+    console.log(JSON.stringify(e));
   });
-
 });
 
 Pebble.addEventListener('appmessage', function(e) {
