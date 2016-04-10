@@ -28,10 +28,6 @@
 
 #define TEXTSIZE 6
 
-#define TEMP_UNIT_C 0
-#define TEMP_UNIT_F 1
-#define TEMP_UNIT_K 2
-
 void updateWeather();
 void tickHandler(struct tm* tickTime, TimeUnits unitsChanged);
 
