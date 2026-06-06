@@ -31,4 +31,8 @@ def build(ctx):
             binaries.append({'platform': p, 'app_elf': app_elf})
 
     ctx.set_group('bundle')
-    ctx.pbl_bundle(binaries=binaries, js=ctx.path.ant_glob(['src/js/*.js','src/js/*.json', 'appinfo.json']))
+    ctx.pbl_bundle(
+        binaries=binaries,
+        js=ctx.path.ant_glob(['src/js/*.js','src/js/*.json', 'appinfo.json']),
+        js_entry_file='src/js/app.js'
+    )

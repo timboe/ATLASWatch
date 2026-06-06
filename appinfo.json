@@ -5,7 +5,7 @@
   "companyName": "Tim Martin",
   "versionLabel": "1.0",
   "sdkVersion": "3",
-  "targetPlatforms": ["basalt", "chalk", "aplite"],
+  "targetPlatforms": ["basalt", "chalk", "aplite", "diorite", "flint", "emery", "gabbro"],
   "capabilities": [
     "configurable",
     "location",
@@ -32,6 +32,7 @@
   "resources": {
     "media": [
       { "file": "fonts/MONOFONT.ttf", "name": "MONO_49", "type": "font", "characterRegex": "[0-9]" },
+      { "file": "fonts/MONOFONT.ttf", "name": "MONO_70", "type": "font", "characterRegex": "[0-9]" },
       { "file": "fonts/comicbd.ttf", "name": "COMIC_49", "type": "font", "characterRegex": "[0-9]" },
       { "file": "images/bt.png", "name": "BT", "type": "png" },
       { "file": "images/h.png", "name": "H", "type": "png" },

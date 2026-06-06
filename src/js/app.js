@@ -41,11 +41,8 @@ var xhrRequest = function (url, type, callback) {
   xhr.send();
 };
 
-
-var appinfo = require('appinfo.json');
-
 var Clay = require('clay');
-var clayConfig = require('config.json');
+var clayConfig = require('./config.json');
 var clay = new Clay(clayConfig, null, {autoHandleEvents: false});
 
 Pebble.addEventListener('ready',
