@@ -10,7 +10,7 @@ static bool s_ready = false;
 
 Layer* getLayer() { return s_atlasLayer; }
 
-static const uint32_t const segments[] = { 200, 200, 200, 200, 200 };
+static const uint32_t segments[] = { 200, 200, 200, 200, 200 };
 VibePattern btDisconnect = {
   .durations = segments,
   .num_segments = ARRAY_LENGTH(segments),
@@ -22,64 +22,70 @@ const GPoint centre = {
 };
 
 const GRect timeRect = {
-  .origin = { .x = (6+CLOCKNUDGE), .y = YCENTRE-35 },
-  .size = { .w = WIDTH-(6+CLOCKNUDGE)*2, .h = 100 }
+  .origin = { .x = (6+CLOCKNUDGE), .y = YCENTRE-(35*HR) },
+  .size = { .w = WIDTH-(6+CLOCKNUDGE)*2, .h = 100*HR }
 };
 
+const int p[4] = {62*HR, 24*HR, 119*HR, 156*HR};
 const GPathInfo innerMuon = {
   .num_points = 8,
-  .points = (GPoint []) {{62+X, 24+Y}, {119+X, 24+Y}, {156+X, 62+Y}, {156+X, 119+Y}, {119+X, 156+Y}, {62+X, 156+Y}, {24+X, 119+Y}, {24+X, 62+Y}}
+  .points = (GPoint []) {{p[0]+X, p[1]+Y}, {p[2]+X, p[1]+Y}, {p[3]+X, p[0]+Y}, {p[3]+X, p[2]+Y}, {p[2]+X, p[3]+Y}, {p[0]+X, p[3]+Y}, {p[1]+X, p[2]+Y}, {p[1]+X, p[0]+Y}}
 };
 
+const int q[4] = {56*HR, 8*HR, 125*HR, 172*HR};
 const GPathInfo outerMuon = {
   .num_points = 8,
-  .points = (GPoint []) {{56+X, 8+Y}, {125+X, 8+Y}, {172+X, 56+Y}, {172+X, 124+Y}, {125+X, 172+Y}, {56+X, 172+Y}, {8+X, 124+Y}, {8+X, 56+Y}}
+  .points = (GPoint []) {{q[0]+X, q[1]+Y}, {q[2]+X, q[1]+Y}, {q[3]+X, q[0]+Y}, {q[3]+X, q[2]+Y}, {q[2]+X, q[3]+Y}, {q[0]+X, q[3]+Y}, {q[1]+X, q[2]+Y}, {q[1]+X, q[0]+Y}}
 };
 
 // EM large MB deposit, will be moved so that 0,0 is the centre for rotation
+const int r[5] = {37*HR, 2*HR, 44*HR};
 const GPathInfo emLarge = {
   .num_points = 6,
-  .points = (GPoint []) {{37,2}, {38,3}, {44,3}, {44,-3}, {38,-3}, {37, -2}}
+  .points = (GPoint []) {{r[0],r[1]}, {r[0],r[1]}, {r[2],r[1]}, {r[2],-r[1]}, {r[0],-r[1]}, {r[0], -r[1]}}
 };
 
 const GPathInfo emSmall = {
   .num_points = 6,
-  .points = (GPoint []) {{37,1}, {38,2}, {44,2}, {44,-2}, {38,-2}, {37, -1}}
+  .points = (GPoint []) {{r[0],r[1]}, {r[0],r[1]}, {r[2],r[1]}, {r[2],-r[1]}, {r[0],-r[1]}, {r[0], -r[1]}}
 };
 
+const int s[3] = {55*HR, 2*HR, 61*HR};
 const GPathInfo hadLarge = {
   .num_points = 6,
-  .points = (GPoint []) {{54,2}, {55,3}, {62,3}, {62,-3}, {55,-3}, {54, -2}}
+  .points = (GPoint []) {{s[0],s[1]}, {s[0],s[1]}, {s[2],s[1]}, {s[2],-s[1]}, {s[0],-s[1]}, {s[0], -s[1]}}
 };
 
 const GPathInfo hadSmall = {
   .num_points = 6,
-  .points = (GPoint []) {{55,1}, {56,2}, {61,3}, {61,-3}, {56,-2}, {55,-1}}
+  .points = (GPoint []) {{s[0],s[1]}, {s[0],s[1]}, {s[2],s[1]}, {s[2],-s[1]}, {s[0],-s[1]}, {s[0],-s[1]}}
 };
 
+const int t[3] = {3*HR, 5*HR, 30*HR};
 const GPathInfo electron = {
   .num_points = 4,
-  .points = (GPoint []) {{3, ID_END}, {5, ID_END+30}, {-5, ID_END+30}, {-3, ID_END}}
+  .points = (GPoint []) {{t[0], ID_END}, {t[1], ID_END+t[2]}, {-t[1], ID_END+t[2]}, {-t[0], ID_END}}
 };
 
+const int u[11] = {6*HR, 9*HR, 4*HR, 3*HR, 1*HR, 40*HR, 30*HR, 35*HR, 2*HR, 42*HR, 5*HR};
 const GPathInfo hadJetA = {
   .num_points = 8,
-  .points = (GPoint []) {{6, EM_END}, {9, EM_END+40}, {4, EM_END+40}, {3, EM_END+30}, {-1, EM_END+30}, {-3, EM_END+35}, {-9, EM_END+35}, {-6, EM_END}}
+  .points = (GPoint []) {{u[0], EM_END}, {u[1], EM_END+u[5]}, {u[2], EM_END+u[5]}, {u[3], EM_END+u[6]}, {-u[4], EM_END+u[6]}, {-u[3], EM_END+u[7]}, {-u[1], EM_END+u[7]}, {-u[0], EM_END}}
 };
 
 const GPathInfo hadJetB = {
   .num_points = 8,
-  .points = (GPoint []) {{6, EM_END}, {9, EM_END+30}, {4, EM_END+30}, {3, EM_END+35}, {-2, EM_END+35}, {-3, EM_END+40}, {-9, EM_END+42}, {-6, EM_END}}
+  .points = (GPoint []) {{u[0], EM_END}, {u[1], EM_END+u[6]}, {u[2], EM_END+u[6]}, {u[3], EM_END+u[7]}, {-u[8], EM_END+u[7]}, {-u[3], EM_END+u[5]}, {-u[1], EM_END+u[9]}, {-u[0], EM_END}}
 };
 
 const GPathInfo emJetA = {
   .num_points = 6,
-  .points = (GPoint []) {{4, ID_END}, {5, EM_END-3}, {0, EM_END-2}, {0, EM_END+5}, {-5, EM_END+4}, {-4, ID_END}}
+  .points = (GPoint []) {{u[2], ID_END}, {u[10], EM_END-u[2]}, {0, EM_END-u[8]}, {0, EM_END+u[10]}, {-u[10], EM_END+u[2]}, {-u[2], ID_END}}
 };
 
 const GPathInfo emJetB = {
   .num_points = 6,
-  .points = (GPoint []) {{4, ID_END}, {5, EM_END+6}, {0, EM_END+5}, {0, EM_END-2}, {-5, EM_END-2}, {-4, ID_END}}
+  .points = (GPoint []) {{u[2], ID_END}, {u[10], EM_END+u[0]}, {0, EM_END+u[10]}, {0, EM_END-u[8]}, {-u[10], EM_END-u[8]}, {-u[2], ID_END}}
 };
 
 static GPath* s_innerMuon;
@@ -513,7 +519,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   #define PT_MAX 15
   graphics_context_set_stroke_color(ctx, COLOR_FALLBACK(GColorCyan,GColorWhite));
   for (unsigned i=0; i < getN(6, 8); ++i) { // Tracks
-    drawCurvyLine(ctx, 0, 30, rand() % PT_MAX, rand() % TRIG_MAX_ANGLE);
+    drawCurvyLine(ctx, 0, 30*HR, rand() % PT_MAX, rand() % TRIG_MAX_ANGLE);
   }
   graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorPastelYellow,GColorWhite));
   for (unsigned i=0; i < getN(3, 4); ++i) { // EM calo
@@ -568,7 +574,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   graphics_context_set_stroke_width(ctx, 3);
   for (int i=0; i < N_DECAY; ++i) {
     if (s_muon[i] == -1) break;
-    drawLine(ctx, 0, 200, s_muon[i]);
+    drawLine(ctx, 0, 200*HR, s_muon[i]);
   }
 
   // DECAY MSG
@@ -578,7 +584,10 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
       if (s_decayMsg[i] == NULL) break;
       ++_msgSize;
     }
-    GRect _bitmapBox = GRect(XCENTRE - (_msgSize*20)/7 /*tweak 5/2*/, PBL_IF_ROUND_ELSE(12,6), 5, 7);
+    GRect _bitmapBox = GRect(XCENTRE - (_msgSize*20)/7 /*tweak 5/2*/, PBL_IF_ROUND_ELSE(12*HR,6*HR), 5, 7);
+    #ifdef PBL_PLATFORM_GABBRO
+      _bitmapBox.origin.y += 2;
+    #endif
     for (unsigned i=0; i < MAX_STR; ++i) {
       if (s_decayMsg[i] == NULL) break;
       graphics_draw_bitmap_in_rect(ctx, s_decayMsg[i], _bitmapBox);
@@ -593,7 +602,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   }
 
   // DATE
-  int l = PBL_IF_ROUND_ELSE(27,2), w = 30, h = 34;
+  int l = PBL_IF_ROUND_ELSE(27*HR,2*HR), w = 30, h = 34;
   graphics_context_set_text_color(ctx, GColorBlack);
   if (enamel_get_KEY_TOWATCH_CALENDAR()) {
     graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
@@ -605,7 +614,7 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
   }
 
   // WEATHER
-  if (s_weatherValid == true && enamel_get_KEY_TOWATCH_WEATHER()) {
+  if (false || (s_weatherValid == true && enamel_get_KEY_TOWATCH_WEATHER())) {
     graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorDarkGray,GColorBlack));
     graphics_fill_rect(ctx, GRect(WIDTH-w-l,l,w,h), 4, GCornersAll);
     graphics_context_set_fill_color(ctx, GColorWhite);
@@ -620,6 +629,11 @@ static void atlasUpdateProc(Layer* thisLayer, GContext *ctx) {
     graphics_context_set_fill_color(ctx, GColorWhite);
     graphics_context_set_stroke_width(ctx, 1);
     GPoint _b = GPoint(XCENTRE-9, HEIGHT - PBL_IF_ROUND_ELSE(20, 14) );
+    #if defined(PBL_PLATFORM_EMERY)
+      _b.y -= 2;
+    #elif defined(PBL_PLATFORM_GABBRO)
+      _b.y -= 7;
+    #endif
     graphics_draw_rect(ctx, GRect(_b.x       , _b.y      , 18, 9));
     graphics_draw_rect(ctx, GRect(_b.x + 18  , _b.y + 2  , 2, 5));
     graphics_fill_rect(ctx, GRect(_b.x + 2  ,  _b.y + 2  ,s_battery.charge_percent/7, 5), 0, GCornersAll); // 100%=14 pixels
@@ -666,7 +680,11 @@ static void mainWindowLoad(Window* window) {
   }
   gpath_move_to(s_electronPath, centre);
 
-  s_mono = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_MONO_49));
+  #if defined(PBL_PLATFORM_EMERY) || defined(PBL_PLATFORM_GABBRO)
+    s_mono = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_MONO_70));
+  #else
+    s_mono = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_MONO_49));
+  #endif
   //s_comic = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_COMIC_49));
 
   s_bitmap[kH]  = gbitmap_create_with_resource(RESOURCE_ID_H);
@@ -706,6 +724,8 @@ static void mainWindowLoad(Window* window) {
   s_battery = battery_state_service_peek();
   bluetooth_connection_service_subscribe(updateBluetooth);
   s_bluetoothStatus = bluetooth_connection_service_peek();
+
+  snprintf(s_temperature, sizeof(s_temperature), "0C");
 
   // Register with TickTimerService
   tick_timer_service_subscribe(MINUTE_UNIT, tickHandler);
